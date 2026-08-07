@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pacific Wellness — Canna Cash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F5F1E8; --surface:#FFFFFF; --ink:#17251A; --ink-2:#3c4b3e; --dim:#6a7666;
+    --green:#12321C; --green-600:#1c4a2a; --gold:#B08A2E; --gold-bright:#C9A961;
+    --leaf:#4f8a3c; --line:#E4DCC9; --line-2:#d6ccb4; --row:#F0EBDD;
+    --danger:#b0472e; --danger-bg:#f6e9e4; --credit:#2f7d3f;
+  }
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;min-height:100vh;line-height:1.5;font-size:16px}
+  .wrap{max-width:1000px;margin:0 auto;padding:34px 26px 90px}
+
+  header.brand{display:flex;align-items:center;gap:16px;padding-bottom:20px;border-bottom:2px solid var(--green)}
+  .word .name{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;letter-spacing:.03em;line-height:1;color:var(--green)}
+  .word .sub{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-top:6px;font-weight:600}
+  .who{margin-left:auto;text-align:right;font-size:12px;color:var(--dim)}
+  .who a{color:var(--green);font-weight:600;cursor:pointer;text-decoration:underline}
+
+  .tabs{display:flex;gap:26px;margin:24px 0 22px;border-bottom:1px solid var(--line)}
+  .tab{background:none;border:none;padding:0 2px 12px;cursor:pointer;color:var(--dim);
+    font-size:15px;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-1px}
+  .tab.active{color:var(--green);border-bottom-color:var(--gold-bright)}
+  .tab:hover{color:var(--ink)}
+  .view{display:none}.view.active{display:block}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 2px rgba(20,40,25,.04)}
+  .pad{padding:22px 24px 20px}
+  h2.blk{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin:0 0 4px;color:var(--green)}
+  .lead{margin:0 0 16px;font-size:14px;color:var(--ink-2)} .lead b{color:var(--green)}
+
+  .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .field label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-weight:600}
+  input{background:#FCFBF7;border:1.5px solid var(--line-2);color:var(--ink);
+    font-family:'Inter',sans-serif;font-size:16px;padding:12px 13px;width:100%;border-radius:7px}
+  input:focus{outline:none;border-color:var(--green);background:#fff}
+  input::placeholder{color:#9aa393}
+  button{font-family:'Inter',sans-serif;cursor:pointer;border:none}
+  .btn{background:var(--green);color:#F5F1E8;font-weight:600;font-size:15px;padding:12px 20px;white-space:nowrap;border-radius:7px}
+  .btn:hover{background:var(--green-600)} .btn[disabled]{opacity:.5;cursor:default}
+  .btn.ghost{background:#fff;color:var(--green);border:1.5px solid var(--line-2);font-weight:600}
+  .btn.ghost:hover{border-color:var(--green);background:#FCFBF7}
+  .btn.gold{background:var(--gold);color:#2a2411}.btn.gold:hover{background:var(--gold-bright)}
+  .btn.red{background:#fff;color:var(--danger);border:1.5px solid #e4c3b8}.btn.red:hover{background:var(--danger-bg)}
+  .btn.sm{padding:9px 14px;font-size:14px}
+
+  .toolbar{display:flex;gap:12px;align-items:center;margin:22px 0 14px}
+  .toolbar .field{flex:1}
+
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  thead th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+    font-weight:700;padding:14px;border-bottom:2px solid var(--line);background:#FBF9F3}
+  tbody td{padding:13px 14px;border-bottom:1px solid var(--line);color:var(--ink)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr.click{cursor:pointer} tbody tr.click:hover{background:var(--row)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .bal{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+  .bal.zero{color:var(--dim);font-weight:600}
+  .name{font-weight:600} .meta{font-size:12px;color:var(--dim);margin-top:2px}
+  .empty{padding:38px 14px;text-align:center;color:var(--dim);font-size:15px}
+  .star{color:#fff;background:var(--gold);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:20px;font-weight:700;margin-left:6px}
+
+  .back{background:none;border:none;color:var(--green);font-weight:600;font-size:14px;cursor:pointer;padding:0;margin-bottom:14px}
+  .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .mhead .mname{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;color:var(--green);line-height:1.05}
+  .mhead .mphone{font-size:13px;color:var(--dim);margin-top:4px}
+  .mbal{text-align:right}
+  .mbal .n{font-family:'Cormorant Garamond',serif;font-size:46px;font-weight:700;color:var(--gold);line-height:1}
+  .mbal .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600}
+  .actions{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:20px 0 6px;padding-top:18px;border-top:1px solid var(--line)}
+  .actions .amt{width:120px}.actions .note{flex:1;min-width:160px}
+  .amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .amount.pos{color:var(--credit)} .amount.neg{color:var(--danger)}
+  .ttype{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;padding:2px 8px;border-radius:5px;background:#eef2e8;color:var(--ink-2)}
+  .ttype.referral{background:#f3ecd6;color:var(--gold)} .ttype.redeem{background:var(--danger-bg);color:var(--danger)} .ttype.earn{background:#e6f0e2;color:var(--credit)}
+
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 8px}
+  .cell{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .cell .n{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;line-height:1;color:var(--green)}
+  .cell .n.g{color:var(--gold)} .cell .n.r{color:var(--danger)}
+  .cell .l{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-top:9px;font-weight:600}
+
+  .section-h{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:700;margin:28px 0 14px;color:var(--green)}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .metric{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+  .metric .n{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:700;line-height:1;color:var(--gold)}
+  .metric .l{font-size:13px;color:var(--green);margin-top:10px;font-weight:700}
+  .metric .d{font-size:12.5px;color:var(--ink-2);margin-top:5px;line-height:1.5}
+  .chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 22px 12px}
+  .bars{display:flex;align-items:flex-end;gap:12px;height:140px}
+  .bars .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bars .bar{width:100%;max-width:46px;background:var(--green);min-height:3px;border-radius:4px 4px 0 0}
+  .bars .bar.cur{background:var(--gold-bright)}
+  .bars .cap{font-size:14px;color:var(--ink);margin-bottom:8px;font-weight:600;font-variant-numeric:tabular-nums}
+  .bars .xl{font-size:11px;color:var(--dim);margin-top:8px}
+
+  .feedback{font-size:14px;color:var(--leaf);min-height:20px;font-weight:500;margin-top:12px}
+  .feedback.warn{color:var(--danger)} .feedback.power{color:var(--gold)}
+
+  footer{margin-top:34px;font-size:13px;color:var(--dim);line-height:1.7;border-top:1px solid var(--line);padding-top:18px}
+  footer b{color:var(--ink-2)}
+  .hide{display:none}
+
+  /* login + banners */
+  .login-wrap{max-width:380px;margin:12vh auto;padding:0 24px}
+  .login-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:30px 28px;box-shadow:0 4px 18px rgba(20,40,25,.08)}
+  .login-card h1{font-family:'Cormorant Garamond',serif;color:var(--green);font-size:28px;margin:0 0 4px}
+  .login-card p{font-size:13px;color:var(--dim);margin:0 0 20px}
+  .login-card .field{margin-bottom:14px}
+  .login-card .btn{width:100%;justify-content:center;text-align:center}
+  .banner{background:#fbeee6;border:1px solid #e7c3ae;color:#8a3d24;padding:12px 16px;border-radius:8px;font-size:13.5px;margin-bottom:18px}
+
+  /* guest balance check */
+  .guest-link{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);text-align:center}
+  .guest-link a{color:var(--green);font-weight:600;font-size:13.5px;cursor:pointer;text-decoration:none}
+  .guest-link a:hover{text-decoration:underline}
+  .gb-result{margin-top:20px;padding:22px 18px;background:#FBF9F3;border:1px solid var(--line-2);border-radius:10px;text-align:center}
+  .gb-result .gb-name{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .gb-result .gb-bal{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:700;color:var(--gold);line-height:1;margin:8px 0 4px}
+  .gb-result .gb-l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600}
+  .gb-note{margin-top:16px;font-size:11.5px;color:var(--dim);line-height:1.6;text-align:center}
+  .gb-code-wrap{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line-2)}
+  .gb-code-l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .gb-code{font-family:'Inter',sans-serif;font-size:30px;font-weight:700;letter-spacing:.14em;color:var(--green);margin:6px 0 6px;font-variant-numeric:tabular-nums}
+  .gb-code-note{font-size:12px;color:var(--ink-2);line-height:1.5}
+  /* staff card referral code chip */
+  .code-chip{display:inline-flex;align-items:center;gap:8px;margin-top:8px;background:#FBF9F3;border:1px solid var(--line-2);border-radius:7px;padding:6px 10px}
+  .code-chip .cl{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .code-chip .cv{font-size:15px;font-weight:700;letter-spacing:.08em;color:var(--green);font-variant-numeric:tabular-nums}
+  .code-chip .cc{background:none;border:none;color:var(--gold);font-weight:600;font-size:12px;cursor:pointer;padding:2px 4px}
+  .code-chip .cc:hover{text-decoration:underline}
+  @media(max-width:720px){.strip{grid-template-columns:repeat(2,1fr)}.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login" class="login-wrap hide">
+  <!-- staff sign-in -->
+  <div class="login-card" id="staff-card">
+    <h1>Pacific Wellness</h1>
+    <p>Canna Cash · staff sign-in</p>
+    <div id="cfg-warn" class="banner hide">Not configured yet — add your Supabase URL and key at the top of this file.</div>
+    <div class="field"><label>Email</label><input type="email" id="lg-email" placeholder="you@pacificwellness"></div>
+    <div class="field"><label>Password</label><input type="password" id="lg-pass" placeholder="••••••••"></div>
+    <button class="btn" id="lg-btn">Sign in</button>
+    <div class="feedback warn" id="lg-fb"></div>
+    <div class="guest-link"><a id="to-guest">Just checking your Canna Cash balance? →</a></div>
+  </div>
+
+  <!-- guest balance check (beta) -->
+  <div class="login-card hide" id="guest-card">
+    <h1>Check your balance</h1>
+    <p>Enter your name or phone number to see your Canna Cash.</p>
+    <div class="field"><label>Name or phone</label><input type="text" id="gb-q" placeholder="First & last name, or phone number" autocomplete="off"></div>
+    <button class="btn gold" id="gb-btn">Check balance</button>
+    <div class="feedback" id="gb-fb"></div>
+    <div id="gb-result" class="gb-result hide">
+      <div class="gb-name" id="gb-name"></div>
+      <div class="gb-bal" id="gb-bal">$0</div>
+      <div class="gb-l">Canna Cash balance</div>
+      <div class="gb-code-wrap">
+        <div class="gb-code-l">Your referral code</div>
+        <div class="gb-code" id="gb-code">—</div>
+        <div class="gb-code-note">Share it — when a friend uses it on their first $15+ visit, you each get $5.</div>
+      </div>
+    </div>
+    <div class="guest-link"><a id="to-staff">‹ Staff sign-in</a></div>
+    <div class="gb-note">Store credit only, never cash · 21+ with valid ID · CA requires a $0.01 minimum on every transfer.</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="wrap hide">
+  <header class="brand">
+    <svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+      <rect x="1" y="1" width="44" height="44" fill="none" stroke="#C9A961" stroke-width="1.4"/>
+      <rect x="20.5" y="10" width="5" height="26" fill="#12321C"/>
+      <rect x="10" y="20.5" width="26" height="5" fill="#12321C"/>
+      <path d="M23 8 C 27 13, 27 17, 23 20 C 19 17, 19 13, 23 8 Z" fill="#4f8a3c"/>
+    </svg>
+    <div class="word"><div class="name">PACIFIC WELLNESS</div><div class="sub">Canna Cash Members</div></div>
+    <div class="who"><span id="who-email"></span><br><a id="signout">Sign out</a></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-view="members">Members</button>
+    <button class="tab" data-view="referrals">Referrals</button>
+    <button class="tab" data-view="money">Money</button>
+  </nav>
+
+  <!-- MEMBERS -->
+  <div class="view active" id="view-members">
+    <div id="m-list">
+      <div class="card pad">
+        <h2 class="blk">Add a member</h2>
+        <p class="lead">Create a Canna Cash member, then add or redeem their balance anytime.</p>
+        <div style="display:grid;grid-template-columns:1fr 160px auto;gap:12px;align-items:end">
+          <div class="field"><label>Name</label><input type="text" id="nm-name" placeholder="Full name" autocomplete="off"></div>
+          <div class="field"><label>Phone</label><input type="text" id="nm-phone" placeholder="Phone number" autocomplete="off"></div>
+          <div class="field"><button class="btn" id="nm-add">Add member</button></div>
+        </div>
+        <div class="feedback" id="nm-fb"></div>
+      </div>
+      <div class="toolbar">
+        <div class="field"><input type="text" id="m-q" placeholder="Search members by name or phone…"></div>
+        <button class="btn gold sm" id="m-blaze">Sync from Blaze</button>
+        <button class="btn ghost sm" id="m-import">Import CSV</button>
+        <button class="btn ghost sm" id="m-export">Export CSV</button>
+        <input type="file" id="m-import-file" accept=".csv" style="display:none">
+      </div>
+      <div class="card">
+        <table><thead><tr><th>Member</th><th>Phone</th><th class="num" style="width:130px">Balance</th><th style="width:120px">Last activity</th></tr></thead>
+          <tbody id="m-rows"></tbody></table>
+        <div class="empty" id="m-empty">No members yet. Add one above.</div>
+      </div>
+    </div>
+    <div id="m-detail" class="hide">
+      <button class="back" id="m-back">‹ All members</button>
+      <div class="card pad">
+        <div class="mhead">
+          <div><div class="mname" id="d-name">—</div><div class="mphone" id="d-phone"></div>
+            <div class="code-chip" id="d-code-chip"><span class="cl">Referral code</span><span class="cv" id="d-code">—</span><button class="cc" id="d-code-copy" title="Copy">Copy</button></div>
+          </div>
+          <div class="mbal"><div class="n" id="d-bal">$0</div><div class="l">Canna Cash balance</div></div>
+        </div>
+        <div class="actions">
+          <div class="field amt"><label>Amount $</label><input type="number" id="d-amt" min="0" step="1" placeholder="5"></div>
+          <div class="field note"><label>Note (optional)</label><input type="text" id="d-note" placeholder="e.g. birthday credit"></div>
+          <button class="btn gold" id="d-earn">+ Add credit</button>
+          <button class="btn" id="d-redeem">− Redeem</button>
+        </div>
+        <div class="feedback" id="d-fb"></div>
+        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn ghost sm" id="d-edit">Edit name / phone</button>
+          <button class="btn red sm" id="d-del">Delete member</button>
+        </div>
+      </div>
+      <div class="section-h">History</div>
+      <div class="card">
+        <table><thead><tr><th style="width:110px">Date</th><th style="width:110px">Type</th><th>Note</th><th class="num" style="width:100px">Amount</th><th class="num" style="width:100px">Balance</th><th style="width:44px"></th></tr></thead>
+          <tbody id="d-rows"></tbody></table>
+        <div class="empty" id="d-empty">No activity yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFERRALS -->
+  <div class="view" id="view-referrals">
+    <div class="card pad">
+      <h2 class="blk">Log a referral</h2>
+      <p class="lead">Enter the friend's info and the <b>referral code</b> they were given. Credits <b id="r-amt">$5</b> Canna Cash to <b>both</b>. No code? Type the referrer's name instead.<a id="r-edit" style="color:var(--green);text-decoration:underline;cursor:pointer;margin-left:6px;font-weight:600">change amount</a></p>
+      <div style="display:grid;grid-template-columns:1fr 120px 130px 1fr auto;gap:12px;align-items:end">
+        <div class="field"><label>New customer</label><input type="text" id="f-new" placeholder="Name" autocomplete="off" list="dl-members"></div>
+        <div class="field"><label>Phone</label><input type="text" id="f-phone" placeholder="Phone" autocomplete="off"></div>
+        <div class="field"><label>Referral code</label><input type="text" id="f-code" placeholder="12345678" autocomplete="off" inputmode="numeric"></div>
+        <div class="field"><label>…or referrer name</label><input type="text" id="f-ref" placeholder="Existing member" autocomplete="off" list="dl-members"></div>
+        <div class="field"><button class="btn" id="f-add">Add &amp; credit both</button></div>
+      </div>
+      <div class="feedback" id="f-fb"></div>
+      <datalist id="dl-members"></datalist>
+    </div>
+    <div class="section-h">Recent referrals</div>
+    <div class="card">
+      <table><thead><tr><th style="width:110px">Date</th><th>New customer</th><th>Referred by</th><th class="num" style="width:120px">Credited</th></tr></thead><tbody id="ref-rows"></tbody></table>
+      <div class="empty" id="ref-empty">No referrals logged yet.</div>
+    </div>
+  </div>
+
+  <!-- MONEY -->
+  <div class="view" id="view-money">
+    <div class="strip">
+      <div class="cell"><div class="n g" id="mo-out">$0</div><div class="l">Outstanding (you owe)</div></div>
+      <div class="cell"><div class="n" id="mo-members">0</div><div class="l">Members</div></div>
+      <div class="cell"><div class="n" id="mo-issued">$0</div><div class="l">Issued All-Time</div></div>
+      <div class="cell"><div class="n r" id="mo-redeemed">$0</div><div class="l">Redeemed All-Time</div></div>
+    </div>
+    <p class="lead" style="margin:14px 2px 0">Outstanding is your live Canna Cash liability — the total sitting on members' cards right now.</p>
+    <div class="section-h">Referral engine</div>
+    <div class="metrics">
+      <div class="metric"><div class="n" id="mm-repeat">0%</div><div class="l">Repeat-referrer rate</div><div class="d">Share of referrers who’ve sent more than one person — your virality signal.</div></div>
+      <div class="metric"><div class="n" id="mm-refs">0</div><div class="l">Total referrals</div><div class="d">Successful referrals logged all-time.</div></div>
+      <div class="metric"><div class="n" id="mm-avg">0</div><div class="l">Avg referrals / referrer</div><div class="d">How hard your advocates work. Above 1.5 is a healthy engine.</div></div>
+    </div>
+    <div class="section-h">Referrals by week</div>
+    <div class="chart"><div class="bars" id="mo-bars"></div></div>
+    <div class="section-h">Top referrers — thank these people</div>
+    <div class="card"><table><tbody id="mo-board"></tbody></table><div class="empty" id="mo-board-empty">No referrers yet.</div></div>
+  </div>
+
+  <footer>
+    Live database — syncs across every signed-in device. Access is staff-only (login required).
+    Balances are store credit (Canna Cash), never cash — CA requires min $0.01 on every cannabis transfer.
+    Pacific Wellness · C10-0001353-LIC
+  </footer>
+</div>
+
+<script>
+/* ======================================================================
+   CONFIG — paste your Supabase project values here (Settings → API)
+   ====================================================================== */
+const SUPABASE_URL = "https://cskmqqjvjqreldiwgizb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNza21xcWp2anFyZWxkaXdnaXpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MzE4NDgsImV4cCI6MjEwMDQwNzg0OH0.4q_twc3Lig6mq9mdHDWlHt9wNw5YhdS2mfAA17USGR8";
+/* ====================================================================== */
+
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var configured = SUPABASE_URL.indexOf("YOUR-PROJECT")===-1 && SUPABASE_ANON_KEY.indexOf("YOUR-PUBLIC")===-1;
+  var sb = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  var members=[], txns=[], AMT=5, current=null, loading=false;
+
+  function money(n){ var neg=n<0; n=Math.abs(+n||0); return (neg?'-$':'$')+(Math.round(n*100)/100).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function fmtDate(iso){ var p=String(iso).split('-'); return p.length===3?p[1]+'/'+p[2]+'/'+p[0].slice(2):iso; }
+  function norm(s){ return String(s||'').toLowerCase().trim().replace(/\s+/g,' '); }
+  function digits(s){ return String(s||'').replace(/\D/g,''); }
+  function weekStart(d){ d=new Date(d); var day=d.getDay(); var diff=(day+6)%7; d.setDate(d.getDate()-diff); d.setHours(0,0,0,0); return d; }
+
+  /* ---------------- AUTH ---------------- */
+  function showLogin(){ $('login').classList.remove('hide'); $('app').classList.add('hide'); if(!configured) $('cfg-warn').classList.remove('hide'); }
+  function showApp(session){ $('login').classList.add('hide'); $('app').classList.remove('hide'); $('who-email').textContent=session.user.email; loadAll(); subscribe(); }
+
+  async function init(){
+    if(!configured){ showLogin(); return; }
+    var { data:{ session } } = await sb.auth.getSession();
+    if(session) showApp(session); else showLogin();
+    sb.auth.onAuthStateChange(function(_e,s){ if(s) showApp(s); else showLogin(); });
+  }
+  $('lg-btn').addEventListener('click', async function(){
+    var fb=$('lg-fb'); fb.textContent='';
+    if(!configured){ fb.textContent='Add your Supabase URL and key at the top of the file first.'; return; }
+    var email=$('lg-email').value.trim(), pass=$('lg-pass').value;
+    if(!email||!pass){ fb.textContent='Enter email and password.'; return; }
+    $('lg-btn').disabled=true; $('lg-btn').textContent='Signing in…';
+    var { error } = await sb.auth.signInWithPassword({email:email,password:pass});
+    $('lg-btn').disabled=false; $('lg-btn').textContent='Sign in';
+    if(error) fb.textContent=error.message;
+  });
+  $('lg-pass').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lg-btn').click(); });
+  $('signout').addEventListener('click', async function(){ await sb.auth.signOut(); });
+
+  /* ---------------- GUEST BALANCE CHECK (beta) ---------------- */
+  function showGuest(on){ $('staff-card').classList.toggle('hide',on); $('guest-card').classList.toggle('hide',!on); if(on){ $('gb-q').focus(); } }
+  $('to-guest').addEventListener('click',function(){ showGuest(true); });
+  $('to-staff').addEventListener('click',function(){ showGuest(false); });
+  var gbBusy=false, gbLast=0;
+  async function guestCheck(){
+    var fb=$('gb-fb'), res=$('gb-result'), btn=$('gb-btn');
+    fb.className='feedback'; fb.textContent=''; res.classList.add('hide');
+    var q=$('gb-q').value.trim();
+    if(q.length<2){ fb.className='feedback warn'; fb.textContent='Enter your full name or phone number.'; return; }
+    var now=Date.now(); if(now-gbLast<1500){ fb.className='feedback warn'; fb.textContent='One moment…'; return; } gbLast=now;
+    if(gbBusy) return; gbBusy=true; btn.disabled=true; btn.textContent='Checking…';
+    try{
+      var r=await fetch('/api/balance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({q:q})});
+      if(r.status===429){ fb.className='feedback warn'; fb.textContent='Too many tries — please wait a minute and try again.'; return; }
+      /* A server-side fault must never be reported as "no match" — that tells a
+         real member they don't exist and sends them to a budtender who can't
+         explain it. Anything 5xx, or any body carrying an `error` key, is our
+         problem and is stated as our problem. */
+      if(r.status>=500){ fb.className='feedback warn'; fb.textContent='Balance lookup is temporarily unavailable — please ask a budtender.'; console.error('balance lookup: HTTP '+r.status); return; }
+      var d=await r.json();
+      if(d && d.error){ fb.className='feedback warn'; fb.textContent='Balance lookup is temporarily unavailable — please ask a budtender.'; console.error('balance lookup: '+d.error); return; }
+      if(d && d.multiple){ fb.className='feedback warn'; fb.textContent='More than one member matches that name — please enter your phone number instead.'; return; }
+      if(!d || !d.found){ fb.className='feedback warn'; fb.textContent='No match found. Check the spelling, try your phone number, or ask a budtender.'; return; }
+      $('gb-name').textContent=d.name; $('gb-bal').textContent=money(d.balance);
+      $('gb-code').textContent=d.code||'—'; res.classList.remove('hide');
+    }catch(e){ fb.className='feedback warn'; fb.textContent='Something went wrong. Please try again.'; }
+    finally{ gbBusy=false; btn.disabled=false; btn.textContent='Check balance'; }
+  }
+  $('gb-btn').addEventListener('click',guestCheck);
+  $('gb-q').addEventListener('keydown',function(e){ if(e.key==='Enter') guestCheck(); });
+
+  /* ---------------- DATA ---------------- */
+  async function loadAll(){
+    if(!sb) return;
+    loading=true;
+    var m=await sb.from('members').select('*');
+    var t=await sb.from('transactions').select('*');
+    if(m.error||t.error){ console.error(m.error||t.error); loading=false; return; }
+    members=m.data||[]; txns=t.data||[];
+    loading=false; renderAll();
+  }
+  var reloadTimer=null;
+  function scheduleReload(){ clearTimeout(reloadTimer); reloadTimer=setTimeout(loadAll,300); }
+  function subscribe(){
+    if(!sb) return;
+    sb.channel('cc-live')
+      .on('postgres_changes',{event:'*',schema:'public',table:'members'},scheduleReload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},scheduleReload)
+      .subscribe();
+  }
+
+  function balanceOf(id){ return txns.filter(function(t){return t.member_id===id;}).reduce(function(s,t){return s+(+t.amount||0);},0); }
+  function lastActivity(id){ var ds=txns.filter(function(t){return t.member_id===id;}).map(function(t){return t.txn_date;}).sort(); return ds.length?ds[ds.length-1]:null; }
+  function memberById(id){ return members.find(function(m){return m.id===id;})||null; }
+  function memberByCode(code){ var c=digits(code); if(!c) return null; return members.find(function(m){return digits(m.referral_code||'')===c;})||null; }
+  function findMember(name,phone){
+    var p=digits(phone), n=norm(name);
+    if(p){ var byP=members.find(function(m){return digits(m.phone)&&digits(m.phone)===p;}); if(byP) return byP; }
+    if(n){ return members.find(function(m){return norm(m.name)===n;})||null; }
+    return null;
+  }
+  async function createMember(name,phone){
+    var r=await sb.from('members').insert({name:name.trim(),phone:String(phone||'').trim()}).select().single();
+    if(r.error){ alert('Error: '+r.error.message); return null; }
+    members.push(r.data); return r.data;
+  }
+  async function ensureMember(name,phone){
+    name=String(name||'').trim(); if(!name) return null;
+    var m=findMember(name,phone); if(m) return m;
+    return await createMember(name,phone);
+  }
+  async function addTxn(mid,type,amount,note){
+    var r=await sb.from('transactions').insert({member_id:mid,txn_date:todayISO(),type:type,amount:amount,note:note||''}).select().single();
+    if(r.error){ alert('Error: '+r.error.message); return false; }
+    txns.push(r.data);
+    return true;
+  }
+
+  /* ---------------- referral helpers ---------------- */
+  function referralEvents(){
+    return txns.filter(function(t){return t.type==='referral' && /^Referred by/i.test(t.note||'');})
+      .map(function(t){ var m=memberById(t.member_id); return {date:t.txn_date, newName:m?m.name:'', refBy:(t.note||'').replace(/^Referred by\s*/i,'').trim(), amt:+t.amount}; });
+  }
+  function referrerCounts(){ var m={}; referralEvents().forEach(function(e){ var k=norm(e.refBy); if(!k) return; if(!m[k])m[k]={label:e.refBy,count:0}; m[k].count++; m[k].label=e.refBy; }); return m; }
+
+  /* ---------------- RENDER ---------------- */
+  function renderMembers(){
+    var q=norm($('m-q').value), qd=digits($('m-q').value);
+    var list=members.map(function(m){return {m:m,bal:balanceOf(m.id),last:lastActivity(m.id)};})
+      .filter(function(x){ if(!q&&!qd) return true; return (q&&norm(x.m.name).indexOf(q)>-1)||(qd&&digits(x.m.phone).indexOf(qd)>-1); })
+      .sort(function(a,b){ return (b.last||'').localeCompare(a.last||'')||norm(a.m.name).localeCompare(norm(b.m.name)); });
+    var tb=$('m-rows'); tb.innerHTML='';
+    list.forEach(function(x){
+      var tr=document.createElement('tr'); tr.className='click'; tr.setAttribute('data-id',x.m.id);
+      tr.innerHTML='<td><div class="name">'+esc(x.m.name)+'</div></td><td>'+esc(x.m.phone||'—')+'</td>'+
+        '<td class="num"><span class="bal'+(x.bal?'':' zero')+'">'+money(x.bal)+'</span></td><td>'+(x.last?fmtDate(x.last):'—')+'</td>';
+      tb.appendChild(tr);
+    });
+    $('m-empty').style.display=list.length?'none':'block';
+    $('dl-members').innerHTML=members.slice().sort(function(a,b){return norm(a.name).localeCompare(norm(b.name));}).map(function(m){return '<option value="'+esc(m.name)+'">';}).join('');
+  }
+  function openMember(id){ current=id; $('m-list').classList.add('hide'); $('m-detail').classList.remove('hide'); renderDetail(); window.scrollTo(0,0); }
+  function closeMember(){ current=null; $('m-detail').classList.add('hide'); $('m-list').classList.remove('hide'); renderMembers(); }
+  function renderDetail(){
+    var m=memberById(current); if(!m){ closeMember(); return; }
+    $('d-name').textContent=m.name; $('d-phone').textContent=m.phone?('Phone: '+m.phone):'No phone on file';
+    $('d-bal').textContent=money(balanceOf(m.id));
+    $('d-code').textContent=m.referral_code||'—';
+    $('d-code-chip').style.display=m.referral_code?'inline-flex':'none';
+    var rows=txns.filter(function(t){return t.member_id===m.id;}).slice().sort(function(a,b){ return a.txn_date<b.txn_date?1:a.txn_date>b.txn_date?-1:0; });
+    var chrono=rows.slice().reverse(), run=0, runMap={};
+    chrono.forEach(function(t){ run+=(+t.amount||0); runMap[t.id]=run; });
+    var tb=$('d-rows'); tb.innerHTML='';
+    rows.forEach(function(t){
+      var cls=(+t.amount<0)?'neg':'pos', sign=(+t.amount<0)?'':'+';
+      var ty=t.type==='referral'?'referral':(+t.amount<0?'redeem':'earn');
+      tb.innerHTML+='<tr><td>'+fmtDate(t.txn_date)+'</td><td><span class="ttype '+ty+'">'+ty+'</span></td><td>'+esc(t.note||'')+'</td>'+
+        '<td class="num amount '+cls+'">'+sign+money(t.amount)+'</td><td class="num">'+money(runMap[t.id])+'</td>'+
+        '<td><button class="del-tx" data-id="'+t.id+'" title="Remove" style="background:none;color:#b3a98f;font-size:17px;padding:2px 6px;cursor:pointer">×</button></td></tr>';
+    });
+    $('d-empty').style.display=rows.length?'none':'block';
+  }
+  function renderReferrals(){
+    $('r-amt').textContent=money(AMT);
+    var ev=referralEvents().sort(function(a,b){return a.date<b.date?1:-1;});
+    var tb=$('ref-rows'); tb.innerHTML='';
+    ev.forEach(function(e){ tb.innerHTML+='<tr><td>'+fmtDate(e.date)+'</td><td class="name">'+esc(e.newName)+'</td><td>'+esc(e.refBy)+'</td><td class="num bal">'+money(e.amt*2)+'</td></tr>'; });
+    $('ref-empty').style.display=ev.length?'none':'block';
+  }
+  function renderMoney(){
+    var out=members.reduce(function(s,m){return s+balanceOf(m.id);},0);
+    var issued=txns.filter(function(t){return +t.amount>0;}).reduce(function(s,t){return s+ +t.amount;},0);
+    var redeemed=txns.filter(function(t){return +t.amount<0;}).reduce(function(s,t){return s+ +t.amount;},0);
+    $('mo-out').textContent=money(out); $('mo-members').textContent=members.length;
+    $('mo-issued').textContent=money(issued); $('mo-redeemed').textContent=money(Math.abs(redeemed));
+    var counts=referrerCounts(), refs=Object.keys(counts), unique=refs.length, ev=referralEvents();
+    var repeat=refs.filter(function(k){return counts[k].count>1;}).length;
+    $('mm-repeat').textContent=(unique?Math.round(repeat/unique*100):0)+'%';
+    $('mm-refs').textContent=ev.length;
+    $('mm-avg').textContent=(unique?(Math.round(ev.length/unique*10)/10):0).toFixed(1);
+    var buckets=[], now=weekStart(new Date());
+    for(var i=7;i>=0;i--){ var ws=new Date(now); ws.setDate(ws.getDate()-i*7); buckets.push({start:ws,count:0}); }
+    ev.forEach(function(e){ var ws=weekStart(new Date(e.date+'T00:00:00')).getTime(); for(var j=0;j<buckets.length;j++){ if(buckets[j].start.getTime()===ws){buckets[j].count++;break;} } });
+    var max=Math.max(1,Math.max.apply(null,buckets.map(function(b){return b.count;})));
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    $('mo-bars').innerHTML=buckets.map(function(b,idx){ var h=Math.round(b.count/max*100); var cur=idx===buckets.length-1?' cur':'';
+      return '<div class="col"><div class="cap">'+(b.count||'')+'</div><div class="bar'+cur+'" style="height:'+h+'%"></div><div class="xl">'+mo[b.start.getMonth()]+' '+b.start.getDate()+'</div></div>'; }).join('');
+    var board=refs.map(function(k){return {label:counts[k].label,count:counts[k].count,cred:counts[k].count*AMT};}).sort(function(a,b){return b.count-a.count;}).slice(0,12);
+    $('mo-board').innerHTML=board.map(function(r,i){ var star=r.count>=3?'<span class="star">power</span>':'';
+      return '<tr><td style="width:36px;color:var(--gold);font-weight:700;font-family:Cormorant Garamond,serif;font-size:19px">'+(i+1)+'</td><td>'+esc(r.label)+' '+star+'</td><td class="num" style="color:var(--ink-2)">'+r.count+' sent</td><td class="num bal" style="width:90px">'+money(r.cred)+'</td></tr>'; }).join('');
+    $('mo-board-empty').style.display=board.length?'none':'block';
+  }
+  function renderAll(){ renderMembers(); if(current) renderDetail(); renderReferrals(); renderMoney(); }
+
+  /* ---------------- EVENTS ---------------- */
+  $('nm-add').addEventListener('click', async function(){
+    var name=$('nm-name').value.trim(), phone=$('nm-phone').value.trim(), fb=$('nm-fb'); fb.className='feedback';
+    if(!name){ fb.className='feedback warn'; fb.textContent='Enter a name.'; return; }
+    var exist=findMember(name,phone);
+    if(exist){ fb.className='feedback warn'; fb.textContent='"'+exist.name+'" already exists. Opening their card.'; openMember(exist.id); $('nm-name').value='';$('nm-phone').value=''; return; }
+    var m=await createMember(name,phone); if(!m) return;
+    $('nm-name').value='';$('nm-phone').value=''; fb.textContent='Added '+m.name+'.'; renderMembers();
+  });
+  $('m-q').addEventListener('input',renderMembers);
+  $('m-rows').addEventListener('click',function(e){ var tr=e.target.closest('tr[data-id]'); if(tr) openMember(tr.getAttribute('data-id')); });
+  $('m-back').addEventListener('click',closeMember);
+
+  async function doAdjust(sign){
+    // Double-submit guard. Without this a slow network + a second tap (or the
+    // Enter shortcut below) writes the credit twice. Real money, so it is the
+    // very first thing we check.
+    var btnId = sign<0 ? 'd-redeem' : 'd-earn';
+    var btn = $(btnId);
+    if(btn && btn.disabled) return;
+
+    var m=memberById(current); if(!m) return;
+    var amt=parseFloat($('d-amt').value), note=$('d-note').value.trim(), fb=$('d-fb'); fb.className='feedback';
+    if(isNaN(amt)||amt<=0){ fb.className='feedback warn'; fb.textContent='Enter an amount.'; return; }
+    if(sign<0){ var bal=balanceOf(m.id); if(amt>bal){ fb.className='feedback warn'; fb.textContent='Redeem exceeds balance ('+money(bal)+').'; return; } }
+
+    var label = btn ? btn.textContent : '';
+    if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+    try{
+      // Only report success if the row actually landed in the ledger.
+      var ok = await addTxn(m.id, sign<0?'redeem':'earn', sign*amt, note);
+      if(!ok){ fb.className='feedback warn'; fb.textContent='Not saved — nothing was charged. Try again.'; return; }
+      $('d-amt').value='';$('d-note').value='';
+      fb.textContent=(sign<0?'Redeemed ':'Added ')+money(amt)+'. New balance '+money(balanceOf(m.id))+'.';
+      renderDetail(); renderMembers();
+    } finally {
+      // Re-query: renderDetail() may have replaced the button node.
+      var b = $(btnId);
+      if(b){ b.disabled=false; b.textContent=label; }
+    }
+  }
+  $('d-code-copy').addEventListener('click',function(){
+    var code=$('d-code').textContent; if(!code||code==='—') return;
+    var done=function(){ var b=$('d-code-copy'); b.textContent='Copied'; setTimeout(function(){b.textContent='Copy';},1200); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(code).then(done,done); } else { done(); }
+  });
+  $('d-earn').addEventListener('click',function(){doAdjust(1);});
+  $('d-redeem').addEventListener('click',function(){doAdjust(-1);});
+  $('d-amt').addEventListener('keydown',function(e){ if(e.key==='Enter') doAdjust(1); });
+  $('d-edit').addEventListener('click', async function(){
+    var m=memberById(current); if(!m) return;
+    var nm=prompt('Name:',m.name); if(nm===null) return; nm=nm.trim(); if(!nm){alert('Name required.');return;}
+    var ph=prompt('Phone:',m.phone||''); if(ph===null) return;
+    var r=await sb.from('members').update({name:nm,phone:ph.trim()}).eq('id',m.id).select().single();
+    if(r.error){ alert('Error: '+r.error.message); return; } m.name=r.data.name; m.phone=r.data.phone; renderDetail(); renderMembers();
+  });
+  $('d-del').addEventListener('click', async function(){
+    var m=memberById(current); if(!m) return;
+    if(!confirm('Delete '+m.name+' and all their history? This cannot be undone.')) return;
+    var r=await sb.from('members').delete().eq('id',m.id);
+    if(r.error){ alert('Error: '+r.error.message); return; }
+    txns=txns.filter(function(t){return t.member_id!==m.id;}); members=members.filter(function(x){return x.id!==m.id;}); closeMember();
+  });
+  $('d-rows').addEventListener('click', async function(e){
+    var b=e.target.closest('.del-tx'); if(!b) return;
+    var id=b.getAttribute('data-id'); var t=txns.find(function(x){return x.id===id;}); if(!t) return;
+    if(!confirm('Remove this '+money(t.amount)+' entry?')) return;
+    var r=await sb.from('transactions').delete().eq('id',id);
+    if(r.error){ alert('Error: '+r.error.message); return; }
+    txns=txns.filter(function(x){return x.id!==id;}); renderDetail(); renderMembers();
+  });
+
+  function updateRefFb(){
+    var fb=$('f-fb'); fb.className='feedback';
+    var name=$('f-new').value.trim(), nn=norm(name);
+    var codeRaw=$('f-code').value.trim();
+    if(codeRaw){
+      var m=memberByCode(codeRaw);
+      if(!m){ fb.className='feedback warn'; fb.textContent='No member has code '+digits(codeRaw)+'.'; return; }
+      if(nn && nn===norm(m.name)){ fb.className='feedback warn'; fb.textContent='That code belongs to the same person — self-referral.'; return; }
+      var cc=referrerCounts()[norm(m.name)];
+      fb.className=(cc&&cc.count>=3)?'feedback power':'feedback';
+      fb.textContent='Code '+digits(codeRaw)+' → '+m.name+(cc?(' · sent '+cc.count+' so far'):'')+'.';
+      return;
+    }
+    var rf=norm($('f-ref').value);
+    if(rf&&nn&&rf===nn){ fb.className='feedback warn'; fb.textContent='Same person can’t refer themselves.'; return; }
+    if(!rf){ fb.textContent=''; return; }
+    var c=referrerCounts()[rf];
+    if(c){ var nx=c.count+1; if(c.count>=3){ fb.className='feedback power'; fb.textContent='★ '+c.label+' — power referrer. This makes '+nx+'. Thank them.'; } else fb.textContent=c.label+' has sent '+c.count+' so far — this makes '+nx+'.'; }
+    else fb.textContent='New referrer.';
+  }
+  $('f-ref').addEventListener('input',updateRefFb);
+  $('f-new').addEventListener('input',updateRefFb);
+  $('f-code').addEventListener('input',updateRefFb);
+  $('f-ref').addEventListener('keydown',function(e){ if(e.key==='Enter') $('f-add').click(); });
+  $('f-code').addEventListener('keydown',function(e){ if(e.key==='Enter') $('f-add').click(); });
+  $('f-add').addEventListener('click', async function(){
+    var name=$('f-new').value.trim(), phone=$('f-phone').value.trim(), fb=$('f-fb'); fb.className='feedback';
+    var codeRaw=$('f-code').value.trim();
+    // Resolve the referrer — a code takes precedence over a typed name.
+    var refMember=null, refBy='';
+    if(codeRaw){
+      refMember=memberByCode(codeRaw);
+      if(!refMember){ fb.className='feedback warn'; fb.textContent='No member has code '+digits(codeRaw)+'. Check the code, or use the referrer name.'; return; }
+      refBy=refMember.name;
+    } else {
+      refBy=$('f-ref').value.trim();
+    }
+    if(!name){ fb.className='feedback warn'; fb.textContent='Enter the new customer’s name.'; return; }
+    if(!refBy){ fb.className='feedback warn'; fb.textContent='Enter the referral code, or the referrer’s name.'; return; }
+    if(norm(name)===norm(refBy)){ fb.className='feedback warn'; fb.textContent='Self-referral — not eligible.'; return; }
+    var existing=findMember(name,phone);
+    if(refMember && existing && existing.id===refMember.id){ fb.className='feedback warn'; fb.textContent='That code belongs to this same customer — self-referral.'; return; }
+    if(existing && balanceOf(existing.id)!==0 && fb.dataset.confirm!=='1'){
+      fb.className='feedback warn'; fb.dataset.confirm='1';
+      fb.textContent=name+' is already an active member (referrals are first-visit only). Click again to log anyway.'; return;
+    }
+    fb.removeAttribute('data-confirm');
+    var nc=await ensureMember(name,phone); if(!nc) return;
+    var rf=refMember || await ensureMember(refBy,''); if(!rf) return;
+    if(nc.id===rf.id){ fb.className='feedback warn'; fb.textContent='Self-referral — not eligible.'; return; }
+    await addTxn(nc.id,'referral',AMT,'Referred by '+rf.name);
+    await addTxn(rf.id,'referral',AMT,'Referred '+name);
+    $('f-new').value='';$('f-phone').value='';$('f-ref').value='';$('f-code').value='';
+    fb.className='feedback'; fb.textContent='Logged — add '+money(AMT)+' to both cards. '+name+': '+money(balanceOf(nc.id))+' · '+rf.name+': '+money(balanceOf(rf.id))+'.';
+    renderAll();
+  });
+  $('r-edit').addEventListener('click',function(){
+    var v=prompt('Canna Cash to each side, per referral ($):',AMT); if(v===null) return; v=parseFloat(v);
+    if(isNaN(v)||v<0){ alert('Enter a number.'); return; } AMT=v; renderAll();
+  });
+
+  $('m-export').addEventListener('click',function(){
+    var head=['Name','Phone','Balance','Last Activity','Member Since'];
+    var lines=[head.join(',')];
+    members.slice().sort(function(a,b){return norm(a.name).localeCompare(norm(b.name));}).forEach(function(m){
+      var row=[m.name,m.phone||'',balanceOf(m.id),lastActivity(m.id)||'',(m.created_at||'').slice(0,10)].map(function(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;});
+      lines.push(row.join(','));
+    });
+    var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
+    a.download='pacific-wellness-members-'+todayISO()+'.csv'; a.click();
+  });
+
+  /* ---------------- CSV IMPORT (bulk bring-in members) ---------------- */
+  function parseCsvLine(line){ var out=[],cur='',q=false; for(var i=0;i<line.length;i++){var ch=line[i]; if(q){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;}else q=false; } else cur+=ch; } else { if(ch==='"')q=true; else if(ch===','){out.push(cur);cur='';} else cur+=ch; } } out.push(cur); return out; }
+  function detectCols(headers){
+    var h=headers.map(function(x){return String(x).toLowerCase().trim();});
+    function find(res){ for(var r=0;r<res.length;r++){ for(var i=0;i<h.length;i++){ if(res[r].test(h[i])) return i; } } return -1; }
+    return {
+      name: find([/^name$/,/full ?name/,/^customer name$/,/^member name$/,/^customer$/,/^member$/,/name/]),
+      first: find([/first ?name/,/^first$/]),
+      last: find([/last ?name/,/^last$/]),
+      phone: find([/^phone$/,/phone/,/mobile/,/^cell$/,/cell ?phone/]),
+      balance: find([/canna ?cash/,/store ?credit/,/^balance$/,/balance/])
+    };
+  }
+  $('m-import').addEventListener('click',function(){ $('m-import-file').click(); });
+  $('m-import-file').addEventListener('change', async function(e){
+    var file=e.target.files[0]; if(!file){ return; }
+    var text=await file.text();
+    var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
+    if(lines.length<2){ alert('That CSV looks empty (needs a header row + data).'); e.target.value=''; return; }
+    var headers=parseCsvLine(lines[0]);
+    var c=detectCols(headers);
+    if(c.name<0 && c.first<0){ alert('Could not find a Name column in that CSV. Columns found: '+headers.join(', ')); e.target.value=''; return; }
+    var rows=[];
+    for(var i=1;i<lines.length;i++){
+      var f=parseCsvLine(lines[i]);
+      var name;
+      if(c.first>=0 && c.last>=0){ name=((f[c.first]||'').trim()+' '+(f[c.last]||'').trim()).trim(); }
+      else if(c.name>=0){ name=(f[c.name]||'').trim(); }
+      else if(c.first>=0){ name=(f[c.first]||'').trim(); }
+      else { name=''; }
+      if(!name) continue;
+      var phone = c.phone>=0 ? (f[c.phone]||'').trim() : '';
+      var bal = c.balance>=0 ? parseFloat(String(f[c.balance]||'').replace(/[^0-9.\-]/g,'')) : 0; if(isNaN(bal)) bal=0;
+      rows.push({name:name,phone:phone,balance:bal});
+    }
+    var seen={};
+    var toAdd=rows.filter(function(r){
+      if(findMember(r.name,r.phone)) return false;
+      var k=norm(r.name)+'|'+digits(r.phone);
+      if(seen[k]) return false; seen[k]=1; return true;
+    });
+    var skipped=rows.length-toAdd.length;
+    if(!toAdd.length){ alert('Nothing new to import — all '+rows.length+' rows already exist as members.'); e.target.value=''; return; }
+    var withBal=toAdd.filter(function(r){return r.balance>0;}).length;
+    var msg='Import '+toAdd.length+' new members'+(skipped?(' ('+skipped+' already exist, skipped)'):'')+'?';
+    if(withBal) msg+='\n'+withBal+' have an opening balance that will be loaded.';
+    if(!confirm(msg)){ e.target.value=''; return; }
+    $('m-import').disabled=true; $('m-import').textContent='Importing…';
+    var ins=await sb.from('members').insert(toAdd.map(function(r){return {name:r.name,phone:r.phone};})).select();
+    $('m-import').disabled=false; $('m-import').textContent='Import CSV';
+    if(ins.error){ alert('Import failed: '+ins.error.message); e.target.value=''; return; }
+    members=members.concat(ins.data);
+    var txnRows=[];
+    ins.data.forEach(function(m,idx){ var b=toAdd[idx]?toAdd[idx].balance:0; if(b&&b>0) txnRows.push({member_id:m.id,txn_date:todayISO(),type:'adjust',amount:b,note:'Imported opening balance'}); });
+    if(txnRows.length){ var t=await sb.from('transactions').insert(txnRows).select(); if(!t.error && t.data) txns=txns.concat(t.data); }
+    e.target.value=''; renderAll();
+    alert('Imported '+ins.data.length+' members'+(txnRows.length?(' with '+txnRows.length+' opening balances'):'')+'.');
+  });
+
+  /* ---------------- SYNC FROM BLAZE (via secure backend proxy) ---------------- */
+  function blazeExtractArray(d){
+    if(!d) return null; if(Array.isArray(d)) return d;
+    var keys=['values','data','members','customers','consumers','result','results','items','records','list','content'];
+    for(var i=0;i<keys.length;i++){ if(Array.isArray(d[keys[i]])) return d[keys[i]]; }
+    if(d.data && typeof d.data==='object'){ for(var i=0;i<keys.length;i++){ if(Array.isArray(d.data[keys[i]])) return d.data[keys[i]]; } }
+    for(var k in d){ if(Array.isArray(d[k]) && d[k].length && typeof d[k][0]==='object') return d[k]; }
+    return null;
+  }
+  function blazeNormalize(r){
+    function pick(keys){ for(var i=0;i<keys.length;i++){ var v=r[keys[i]]; if(v!=null && String(v).trim()!=='') return String(v).trim(); } return ''; }
+    var name=pick(['name','fullName','memberName','displayName']);
+    if(!name){ var fn=pick(['firstName','first_name','fName','givenName']); var ln=pick(['lastName','last_name','lName','familyName']); name=(fn+' '+ln).trim(); }
+    var phone=pick(['phone','phoneNumber','primaryPhone','cellPhone','mobile','phone_number','mobileNumber','primaryPhoneNumber']);
+    return {name:name, phone:phone};
+  }
+  $('m-blaze').addEventListener('click', async function(){
+    var btn=$('m-blaze');
+    var sres=await sb.auth.getSession(); var sess=sres.data.session;
+    if(!sess){ alert('Please sign out and back in, then try again.'); return; }
+    var token=sess.access_token;
+    btn.disabled=true; btn.textContent='Syncing…';
+    async function bg(path,mode){
+      var r=await fetch('/api/blaze?path='+encodeURIComponent(path)+'&auth='+mode,{headers:{Authorization:'Bearer '+token}});
+      var t=await r.text(); var d=null; try{d=JSON.parse(t);}catch(e){}
+      return {status:r.status, d:d, t:t};
+    }
+    try{
+      var diag=[], modes=['a','b','c','d','e'], good=null;
+      for(var i=0;i<modes.length;i++){
+        var res=await bg('/api/v1/partner/store',modes[i]);
+        diag.push('store['+modes[i]+']='+res.status);
+        if(res.status===401 && res.d && res.d.error==='unauthorized'){ alert('Your login session could not be verified. Sign out and back in, then retry.'); btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+        if(res.status===500 && res.d && res.d.error==='missing_secrets'){ alert('Blaze keys are not set yet. In Cloudflare → your Pages project → Settings → Variables and Secrets, add BLAZE_KEY and BLAZE_SECRET, then redeploy.'); btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+        if(res.status>=200 && res.status<300){ good=modes[i]; break; }
+      }
+      if(!good){ alert('Reached Blaze but authentication was rejected.\n\n'+diag.join('  ')+'\n\nMost likely your key/secret don\'t have Partner API access yet. Copy this line to Claude.'); btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+      var paths=['/api/v1/partner/members','/api/v1/partner/store/members','/api/v1/partner/customers','/api/v1/partner/store/customers','/api/v1/partner/member/list','/api/v1/partner/consumers','/api/v1/partner/store/consumers','/api/v1/partner/members/active'];
+      var recs=null, usedPath=null;
+      for(var j=0;j<paths.length;j++){
+        var res=await bg(paths[j],good);
+        diag.push(paths[j].replace('/api/v1/partner','')+'='+res.status);
+        if(res.status>=200 && res.status<300){ var arr=blazeExtractArray(res.d); if(arr && arr.length){ recs=arr; usedPath=paths[j]; break; } }
+      }
+      if(!recs){ alert('Connected to Blaze (auth mode '+good+') but could not locate the members list endpoint.\n\n'+diag.join('  ')+'\n\nSend this to Claude to finalize the endpoint.'); btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+      var rows=recs.map(blazeNormalize).filter(function(r){return r.name;});
+      var seen={};
+      var toAdd=rows.filter(function(r){ if(findMember(r.name,r.phone)) return false; var k=norm(r.name)+'|'+digits(r.phone); if(seen[k]) return false; seen[k]=1; return true; });
+      if(!rows.length){ alert('Blaze responded from '+usedPath+' but no member names were found in the data. Send this to Claude.'); btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+      if(!toAdd.length){ alert('Blaze returned '+rows.length+' members — all already in your list.'); btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+      if(!confirm('Blaze returned '+rows.length+' members. Import '+toAdd.length+' new ones?')){ btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+      var ins=await sb.from('members').insert(toAdd.map(function(r){return {name:r.name,phone:r.phone};})).select();
+      if(ins.error){ alert('Import error: '+ins.error.message); btn.disabled=false; btn.textContent='Sync from Blaze'; return; }
+      members=members.concat(ins.data); renderAll();
+      alert('Imported '+ins.data.length+' members from Blaze.');
+    }catch(e){ alert('Sync failed: '+e); }
+    btn.disabled=false; btn.textContent='Sync from Blaze';
+  });
+
+  document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('.view').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active'); $('view-'+t.dataset.view).classList.add('active'); renderAll();
+  });});
+
+  init();
+})();
+</script>
+</body>
+</html>
