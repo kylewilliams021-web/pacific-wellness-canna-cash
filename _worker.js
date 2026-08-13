@@ -29,6 +29,12 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const RL_MAX = 15;      // lookups allowed per window, per IP
 const RL_WINDOW = 60;   // window length in seconds
 
+// Build stamp. The deploy script overwrites this value on every push so the
+// deploy loop can confirm the NEW version is actually live (it polls the x-build
+// response header until it matches the value it just shipped) before running the
+// full header/rate-limit verification. Harmless to expose; it's just an id.
+const BUILD_ID = "1786591275";
+
 // Security response headers, applied to every response below because a _headers
 // file is ignored in advanced (_worker.js) mode.
 //   strict-transport-security : force HTTPS for a year. The site is already
@@ -43,7 +49,8 @@ const SEC_HEADERS = {
   "strict-transport-security": "max-age=31536000; includeSubDomains",
   "x-content-type-options": "nosniff",
   "x-frame-options": "DENY",
-  "referrer-policy": "no-referrer"
+  "referrer-policy": "no-referrer",
+  "x-build": BUILD_ID
 };
 
 function json(o, s, extra) {
