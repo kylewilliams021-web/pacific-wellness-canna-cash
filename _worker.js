@@ -29,18 +29,28 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const RL_MAX = 15;      // lookups allowed per window, per IP
 const RL_WINDOW = 60;   // window length in seconds
 
-// HSTS: force HTTPS for a year. The site is already HTTPS-only behind
-// Cloudflare, so this only closes the first-visit SSL-strip window. Applied to
-// every response below because a _headers file is ignored in advanced (_worker.js)
-// mode. includeSubDomains scopes to the cash.* subtree only, not the apex, so it
-// is safe here. `preload` is deliberately omitted — it is hard to reverse.
-const HSTS = "max-age=31536000; includeSubDomains";
+// Security response headers, applied to every response below because a _headers
+// file is ignored in advanced (_worker.js) mode.
+//   strict-transport-security : force HTTPS for a year. The site is already
+//     HTTPS-only behind Cloudflare, so this only closes the first-visit
+//     SSL-strip window. includeSubDomains scopes to the cash.* subtree only, not
+//     the apex, so it is safe here. `preload` is deliberately omitted — hard to reverse.
+//   x-content-type-options    : nosniff — stop MIME-type guessing on responses.
+//   x-frame-options           : DENY — no framing, blocks clickjacking of the
+//     staff login / PII pages. (No CSP frame-ancestors yet — separate tested pass.)
+//   referrer-policy           : no-referrer — never leak the URL to third parties.
+const SEC_HEADERS = {
+  "strict-transport-security": "max-age=31536000; includeSubDomains",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+  "referrer-policy": "no-referrer"
+};
 
 function json(o, s, extra) {
   const headers = {
     "content-type": "application/json",
     "cache-control": "no-store",
-    "strict-transport-security": HSTS
+    ...SEC_HEADERS
   };
   if (extra) { for (const k in extra) { if (extra[k] != null) headers[k] = String(extra[k]); } }
   return new Response(JSON.stringify(o), { status: s || 200, headers: headers });
@@ -220,18 +230,18 @@ export default {
         headers: {
           "content-type": "application/json",
           "cache-control": "no-store",
-          "strict-transport-security": HSTS,
+          ...SEC_HEADERS,
           "x-blaze-status": String(r.status)
         }
       });
     }
 
     // Static assets. Asset responses can be immutable, so copy before mutating.
-    // A _headers file would be ignored in advanced mode, so HSTS is layered on
-    // the HTML page here.
+    // A _headers file would be ignored in advanced mode, so the security
+    // headers are layered on the HTML page here.
     const assetResp = await env.ASSETS.fetch(request);
     const out = new Response(assetResp.body, assetResp);
-    out.headers.set("strict-transport-security", HSTS);
+    for (const k in SEC_HEADERS) out.headers.set(k, SEC_HEADERS[k]);
     return out;
   }
 };
