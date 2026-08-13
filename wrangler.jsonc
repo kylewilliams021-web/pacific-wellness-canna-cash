@@ -6,8 +6,12 @@
   "main": "_worker.js",
   "assets": {
     "directory": ".",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
+  "kv_namespaces": [
+    { "binding": "RATELIMIT_KV", "id": "ab5081366ba54dcab495351c3c06052e" }
+  ],
   "observability": {
     "enabled": true
   }
