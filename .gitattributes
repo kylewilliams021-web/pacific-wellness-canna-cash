@@ -1,0 +1,3 @@
+# Normalize all text files to LF, in the repo and on disk.
+# Prevents Windows CRLF from producing phantom whole-file diffs.
+* text=auto eol=lf
