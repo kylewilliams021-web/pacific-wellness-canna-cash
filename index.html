@@ -140,6 +140,24 @@
   .code-chip .cc{background:none;border:none;color:var(--gold);font-weight:600;font-size:12px;cursor:pointer;padding:2px 4px}
   .code-chip .cc:hover{text-decoration:underline}
   @media(max-width:720px){.strip{grid-template-columns:repeat(2,1fr)}.metrics{grid-template-columns:1fr}}
+
+  /* ---- tier badge + counter flow ---- */
+  .tier-badge{display:inline-flex;align-items:center;margin-left:10px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#F1EDE0;color:var(--green);border:1px solid var(--line-2);vertical-align:middle}
+  .tier-badge.t3{background:var(--gold);color:#2a2411;border-color:transparent}
+  .row-act{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+  .row-act .field{width:150px}
+  .row-act input[type=number]{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .earn-preview{flex:1;min-width:190px;padding:9px 14px;border-radius:8px;background:#FBF9F3;border:1px solid var(--line-2)}
+  .earn-preview.live{border-color:var(--gold);background:#FDFAF0}
+  .earn-preview .big{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+  .earn-preview .sub{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:600;margin-top:3px}
+  .act-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:16px 0 8px}
+  .sub-actions{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+  .sub-actions summary{cursor:pointer;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-weight:700;list-style:none}
+  .sub-actions summary::-webkit-details-marker{display:none}
+  .sub-actions summary:before{content:'+ ';color:var(--gold)}
+  .sub-actions[open] summary:before{content:'\2212 '}
+  .listnote{padding:10px 16px;border-top:1px solid var(--line);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:600}
 </style>
 </head>
 <body>
@@ -213,7 +231,7 @@
         <div class="feedback" id="nm-fb"></div>
       </div>
       <div class="toolbar">
-        <div class="field"><input type="text" id="m-q" placeholder="Search members by name or phone…"></div>
+        <div class="field"><input type="text" id="m-q" autocomplete="off" placeholder="Search name or phone, then Enter…"></div>
         <button class="btn gold sm" id="m-blaze">Sync from Blaze</button>
         <button class="btn ghost sm" id="m-import">Import CSV</button>
         <button class="btn ghost sm" id="m-export">Export CSV</button>
@@ -223,24 +241,40 @@
         <table><thead><tr><th>Member</th><th>Phone</th><th class="num" style="width:130px">Balance</th><th style="width:120px">Last activity</th></tr></thead>
           <tbody id="m-rows"></tbody></table>
         <div class="empty" id="m-empty">No members yet. Add one above.</div>
+        <div id="m-count" class="listnote"></div>
       </div>
     </div>
     <div id="m-detail" class="hide">
       <button class="back" id="m-back">‹ All members</button>
       <div class="card pad">
         <div class="mhead">
-          <div><div class="mname" id="d-name">—</div><div class="mphone" id="d-phone"></div>
+          <div><div class="mname" id="d-name">—</div><span class="tier-badge" id="d-tier" style="display:none"></span><div class="mphone" id="d-phone"></div>
             <div class="code-chip" id="d-code-chip"><span class="cl">Referral code</span><span class="cv" id="d-code">—</span><button class="cc" id="d-code-copy" title="Copy">Copy</button></div>
           </div>
           <div class="mbal"><div class="n" id="d-bal">$0</div><div class="l">Canna Cash balance</div></div>
         </div>
-        <div class="actions">
-          <div class="field amt"><label>Amount $</label><input type="number" id="d-amt" min="0" step="1" placeholder="5"></div>
-          <div class="field note"><label>Note (optional)</label><input type="text" id="d-note" placeholder="e.g. birthday credit"></div>
-          <button class="btn gold" id="d-earn">+ Add credit</button>
-          <button class="btn" id="d-redeem">− Redeem</button>
+        <div class="actions" style="display:block">
+          <div class="act-label">Record a sale</div>
+          <div class="row-act">
+            <div class="field"><label>Sale total $</label><input type="number" id="d-sale" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+            <div class="earn-preview" id="d-earn-box"><div class="big" id="d-earn-amt">$0.00</div><div class="sub" id="d-earn-sub">enter the total from Blaze</div></div>
+            <button class="btn gold" id="d-sale-add" disabled>Add credit</button>
+          </div>
+          <div class="act-label">Redeem</div>
+          <div class="row-act">
+            <div class="field"><label>Amount $</label><input type="number" id="d-amt" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+            <button class="btn" id="d-redeem">− Redeem</button>
+            <button class="btn ghost" id="d-redeem-all">Redeem all (<span id="d-redeem-all-amt">$0</span>)</button>
+          </div>
+          <div class="feedback" id="d-fb"></div>
+          <details class="sub-actions"><summary>Manual adjustment</summary>
+            <div class="row-act" style="margin-top:12px">
+              <div class="field"><label>Amount $</label><input type="number" id="d-adj" min="0" step="0.01" placeholder="5"></div>
+              <div class="field" style="flex:1;min-width:170px"><label>Reason</label><input type="text" id="d-note" placeholder="e.g. birthday credit"></div>
+              <button class="btn gold" id="d-earn">+ Add credit</button>
+            </div>
+          </details>
         </div>
-        <div class="feedback" id="d-fb"></div>
         <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
           <button class="btn ghost sm" id="d-edit">Edit name / phone</button>
           <button class="btn red sm" id="d-del">Delete member</button>
@@ -318,9 +352,13 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
   var configured = SUPABASE_URL.indexOf("YOUR-PROJECT")===-1 && SUPABASE_ANON_KEY.indexOf("YOUR-PUBLIC")===-1;
   var sb = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-  var members=[], txns=[], AMT=5, current=null, loading=false;
+  var members=[], txns=[], tiers=[], settings={}, AMT=5, current=null, loading=false;
 
-  function money(n){ var neg=n<0; n=Math.abs(+n||0); return (neg?'-$':'$')+(Math.round(n*100)/100).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+  // Whole dollars stay clean ($12); anything with cents shows both digits
+  // ($12.40, never $12.4) — this is a ledger, a missing digit reads as an error.
+  function money(n){ var neg=n<0; n=Math.abs(+n||0); n=Math.round(n*100)/100;
+    var d=(n%1===0)?0:2;
+    return (neg?'-$':'$')+n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:2}); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function todayISO(){ return new Date().toISOString().slice(0,10); }
   function fmtDate(iso){ var p=String(iso).split('-'); return p.length===3?p[1]+'/'+p[2]+'/'+p[0].slice(2):iso; }
@@ -389,8 +427,16 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     loading=true;
     var m=await sb.from('members').select('*');
     var t=await sb.from('transactions').select('*');
+    var tr=await sb.from('tiers').select('*');
+    var st=await sb.from('settings').select('*');
     if(m.error||t.error){ console.error(m.error||t.error); loading=false; return; }
     members=m.data||[]; txns=t.data||[];
+    // Tiers and settings live in the database so rates change without a deploy.
+    // If either read fails we fall back to a flat 1% rather than issuing nothing.
+    tiers=(tr.data&&tr.data.length)?tr.data.slice().sort(function(a,b){return (+a.min_spend)-(+b.min_spend);})
+                                   :[{id:1,name:'Member',min_spend:0,rate:0.01}];
+    settings={}; (st.data||[]).forEach(function(r){ settings[r.key]=r.value; });
+    if(settings.referral_amount!=null && !isNaN(parseFloat(settings.referral_amount))) AMT=parseFloat(settings.referral_amount);
     loading=false; renderAll();
   }
   var reloadTimer=null;
@@ -403,8 +449,39 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
       .subscribe();
   }
 
-  function balanceOf(id){ return txns.filter(function(t){return t.member_id===id;}).reduce(function(s,t){return s+(+t.amount||0);},0); }
-  function lastActivity(id){ var ds=txns.filter(function(t){return t.member_id===id;}).map(function(t){return t.txn_date;}).sort(); return ds.length?ds[ds.length-1]:null; }
+  /* ---------------- tiers ----------------
+     Spend is summed from purchase_total on this member's own transactions, so
+     status works before the Blaze API is connected. Blaze history, when it
+     lands, only enriches it. */
+  function earnWindowDays(){ var d=parseInt(settings.earn_window_days,10); return (isNaN(d)||d<=0)?365:d; }
+  function spendWindow(id){ return IDX.spend[id]||0; }
+  function tierFor(id){
+    var sp=spendWindow(id), pick=tiers[0]||{id:1,name:'Member',rate:0.01};
+    for(var i=0;i<tiers.length;i++){ if(sp>=(+tiers[i].min_spend||0)) pick=tiers[i]; }
+    return pick;
+  }
+  function creditFor(id,total){ return Math.round((+total||0)*(+tierFor(id).rate||0)*100)/100; }
+  function pctLabel(rate){ return (Math.round((+rate||0)*10000)/100)+'%'; }
+
+  /* Balances, last activity and trailing spend used to each rescan the whole
+     ledger per member, so cost was members x transactions. At 1,086 members and
+     a year of sales that put a single search keystroke at ~2.7s on counter
+     hardware. One pass builds all three, and every lookup is a map hit. */
+  var IDX={bal:{},last:{},spend:{}};
+  function buildIndex(){
+    var cutoff=new Date(); cutoff.setDate(cutoff.getDate()-earnWindowDays());
+    var iso=cutoff.toISOString().slice(0,10);
+    var b={},l={},sp={};
+    for(var i=0;i<txns.length;i++){
+      var t=txns[i], id=t.member_id;
+      b[id]=(b[id]||0)+(+t.amount||0);
+      if(!l[id]||t.txn_date>l[id]) l[id]=t.txn_date;
+      if(t.purchase_total!=null && t.txn_date>=iso) sp[id]=(sp[id]||0)+(+t.purchase_total||0);
+    }
+    IDX={bal:b,last:l,spend:sp};
+  }
+  function balanceOf(id){ return IDX.bal[id]||0; }
+  function lastActivity(id){ return IDX.last[id]||null; }
   function memberById(id){ return members.find(function(m){return m.id===id;})||null; }
   function memberByCode(code){ var c=digits(code); if(!c) return null; return members.find(function(m){return digits(m.referral_code||'')===c;})||null; }
   function findMember(name,phone){
@@ -423,10 +500,14 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     var m=findMember(name,phone); if(m) return m;
     return await createMember(name,phone);
   }
-  async function addTxn(mid,type,amount,note){
-    var r=await sb.from('transactions').insert({member_id:mid,txn_date:todayISO(),type:type,amount:amount,note:note||''}).select().single();
+  async function addTxn(mid,type,amount,note,extra){
+    var row={member_id:mid,txn_date:todayISO(),type:type,amount:amount,note:note||''};
+    if(extra&&extra.purchase_total!=null){ row.purchase_total=extra.purchase_total; row.rate_applied=extra.rate_applied; }
+    var r=await sb.from('transactions').insert(row).select().single();
     if(r.error){ alert('Error: '+r.error.message); return false; }
     txns.push(r.data);
+    buildIndex();   // callers read balanceOf() immediately to build the
+                    // confirmation the budtender reads out; it must be fresh
     return true;
   }
 
@@ -438,30 +519,71 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
   function referrerCounts(){ var m={}; referralEvents().forEach(function(e){ var k=norm(e.refBy); if(!k) return; if(!m[k])m[k]={label:e.refBy,count:0}; m[k].count++; m[k].label=e.refBy; }); return m; }
 
   /* ---------------- RENDER ---------------- */
+  var MAX_ROWS=40, dlBuilt=0;
   function renderMembers(){
+    buildIndex();
     var q=norm($('m-q').value), qd=digits($('m-q').value);
     var list=members.map(function(m){return {m:m,bal:balanceOf(m.id),last:lastActivity(m.id)};})
       .filter(function(x){ if(!q&&!qd) return true; return (q&&norm(x.m.name).indexOf(q)>-1)||(qd&&digits(x.m.phone).indexOf(qd)>-1); })
       .sort(function(a,b){ return (b.last||'').localeCompare(a.last||'')||norm(a.m.name).localeCompare(norm(b.m.name)); });
+    // Only the top slice reaches the DOM. Budtenders search; they never scroll
+    // 1,086 rows, and rebuilding them all on every keystroke is what made
+    // typing feel broken.
+    var total=list.length; var shown=list.slice(0,MAX_ROWS);
+    var note=$('m-count');
+    if(note) note.textContent = total>shown.length ? ('Showing '+shown.length+' of '+total+' — keep typing to narrow') : (total+(total===1?' member':' members'));
     var tb=$('m-rows'); tb.innerHTML='';
-    list.forEach(function(x){
+    shown.forEach(function(x){
       var tr=document.createElement('tr'); tr.className='click'; tr.setAttribute('data-id',x.m.id);
       tr.innerHTML='<td><div class="name">'+esc(x.m.name)+'</div></td><td>'+esc(x.m.phone||'—')+'</td>'+
         '<td class="num"><span class="bal'+(x.bal?'':' zero')+'">'+money(x.bal)+'</span></td><td>'+(x.last?fmtDate(x.last):'—')+'</td>';
       tb.appendChild(tr);
     });
     $('m-empty').style.display=list.length?'none':'block';
-    $('dl-members').innerHTML=members.slice().sort(function(a,b){return norm(a.name).localeCompare(norm(b.name));}).map(function(m){return '<option value="'+esc(m.name)+'">';}).join('');
+    // The datalist only changes when the roster does, not on every keystroke.
+    if(dlBuilt!==members.length){
+      $('dl-members').innerHTML=members.slice().sort(function(a,b){return norm(a.name).localeCompare(norm(b.name));}).map(function(m){return '<option value="'+esc(m.name)+'">';}).join('');
+      dlBuilt=members.length;
+    }
   }
-  function openMember(id){ current=id; $('m-list').classList.add('hide'); $('m-detail').classList.remove('hide'); renderDetail(); window.scrollTo(0,0); }
-  function closeMember(){ current=null; $('m-detail').classList.add('hide'); $('m-list').classList.remove('hide'); renderMembers(); }
+  function openMember(id){
+    current=id; $('m-list').classList.add('hide'); $('m-detail').classList.remove('hide');
+    renderDetail(); window.scrollTo(0,0);
+    // Land the cursor where the next keystroke is always going: the sale total.
+    var sale=$('d-sale'); if(sale){ sale.value=''; try{ sale.focus(); }catch(e){} }
+  }
+  function closeMember(){
+    current=null; $('m-detail').classList.add('hide'); $('m-list').classList.remove('hide');
+    // Next customer is a different person - clear the search and take the cursor.
+    var q=$('m-q'); if(q){ q.value=''; }
+    renderMembers();
+    if(q){ try{ q.focus(); }catch(e){} }
+  }
   function renderDetail(){
+    buildIndex();
     var m=memberById(current); if(!m){ closeMember(); return; }
     $('d-name').textContent=m.name; $('d-phone').textContent=m.phone?('Phone: '+m.phone):'No phone on file';
     $('d-bal').textContent=money(balanceOf(m.id));
+    var tr=tierFor(m.id), bal=balanceOf(m.id);
+    var badge=$('d-tier');
+    badge.textContent=tr.name+' \u00b7 '+pctLabel(tr.rate);
+    badge.className='tier-badge'+((+tr.rate>=0.03)?' t3':'');
+    badge.title='Trailing '+earnWindowDays()+'-day spend: '+money(spendWindow(m.id));
+    badge.style.display='inline-flex';
+    $('d-redeem-all-amt').textContent=money(bal);
+    $('d-redeem-all').disabled = !(bal>0);
+    updateEarnPreview();
     $('d-code').textContent=m.referral_code||'—';
     $('d-code-chip').style.display=m.referral_code?'inline-flex':'none';
-    var rows=txns.filter(function(t){return t.member_id===m.id;}).slice().sort(function(a,b){ return a.txn_date<b.txn_date?1:a.txn_date>b.txn_date?-1:0; });
+    // Sort by date, then created_at. Several sales land on one day, and the
+    // running-balance column is computed in this order - without the tiebreak
+    // it renders an arbitrary, wrong-looking balance trail.
+    var rows=txns.filter(function(t){return t.member_id===m.id;}).slice().sort(function(a,b){
+      if(a.txn_date!==b.txn_date) return a.txn_date<b.txn_date?1:-1;
+      var ca=a.created_at||'', cb=b.created_at||'';
+      if(ca!==cb) return ca<cb?1:-1;
+      return 0;
+    });
     var chrono=rows.slice().reverse(), run=0, runMap={};
     chrono.forEach(function(t){ run+=(+t.amount||0); runMap[t.id]=run; });
     var tb=$('d-rows'); tb.innerHTML='';
@@ -482,6 +604,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     $('ref-empty').style.display=ev.length?'none':'block';
   }
   function renderMoney(){
+    buildIndex();
     var out=members.reduce(function(s,m){return s+balanceOf(m.id);},0);
     var issued=txns.filter(function(t){return +t.amount>0;}).reduce(function(s,t){return s+ +t.amount;},0);
     var redeemed=txns.filter(function(t){return +t.amount<0;}).reduce(function(s,t){return s+ +t.amount;},0);
@@ -516,8 +639,60 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     $('nm-name').value='';$('nm-phone').value=''; fb.textContent='Added '+m.name+'.'; renderMembers();
   });
   $('m-q').addEventListener('input',renderMembers);
+  // Enter opens the match. With a phone number that is the whole interaction:
+  // type the digits, press Enter, you are in the sale field.
+  $('m-q').addEventListener('keydown',function(e){
+    if(e.key!=='Enter') return;
+    // Only jump when the search resolves to exactly one person. A phone number
+    // always does. A partial name may not - and opening "a Maria" to credit
+    // the wrong customer is worse than making them finish typing.
+    var rows=$('m-rows').querySelectorAll('tr[data-id]');
+    if(rows.length===1){ e.preventDefault(); openMember(rows[0].getAttribute('data-id')); }
+  });
   $('m-rows').addEventListener('click',function(e){ var tr=e.target.closest('tr[data-id]'); if(tr) openMember(tr.getAttribute('data-id')); });
   $('m-back').addEventListener('click',closeMember);
+
+  /* The budtender types the number they can already see on the Blaze screen.
+     The app resolves the member's tier and does the arithmetic, so nobody is
+     doing percentages in their head at the counter. */
+  function updateEarnPreview(){
+    var box=$('d-earn-box'), amtEl=$('d-earn-amt'), subEl=$('d-earn-sub'), btn=$('d-sale-add');
+    if(!box||!current) return;
+    var m=memberById(current); if(!m) return;
+    var tr=tierFor(m.id), total=parseFloat($('d-sale').value);
+    if(isNaN(total)||total<=0){
+      amtEl.textContent='$0.00'; subEl.textContent='enter the total from Blaze';
+      box.classList.remove('live'); btn.disabled=true;
+      btn.textContent='Add credit'; return;
+    }
+    var credit=creditFor(m.id,total);
+    amtEl.textContent=money(credit);
+    subEl.textContent=pctLabel(tr.rate)+' of '+money(total)+' \u00b7 '+tr.name;
+    box.classList.add('live');
+    btn.disabled=false; btn.textContent='Add '+money(credit);
+  }
+
+  async function doSale(){
+    var btn=$('d-sale-add'); if(btn&&btn.disabled) return;
+    var m=memberById(current); if(!m) return;
+    var fb=$('d-fb'); fb.className='feedback';
+    var total=parseFloat($('d-sale').value);
+    if(isNaN(total)||total<=0){ fb.className='feedback warn'; fb.textContent='Enter the sale total.'; return; }
+    var tr=tierFor(m.id), credit=creditFor(m.id,total);
+    if(credit<=0){ fb.className='feedback warn'; fb.textContent='That sale is too small to earn credit.'; return; }
+    var label=btn.textContent; btn.disabled=true; btn.textContent='Saving\u2026';
+    try{
+      var note=pctLabel(tr.rate)+' of '+money(total)+' ('+tr.name+')';
+      var ok=await addTxn(m.id,'earn',credit,note,{purchase_total:total,rate_applied:tr.rate});
+      if(!ok){ fb.className='feedback warn'; fb.textContent='Not saved \u2014 nothing was credited. Try again.'; return; }
+      $('d-sale').value='';
+      fb.className='feedback ok';
+      fb.textContent='Added '+money(credit)+' to '+m.name+' \u2014 new balance '+money(balanceOf(m.id))+'.';
+      renderAll();
+    } finally {
+      btn.disabled=false; btn.textContent=label; updateEarnPreview();
+    }
+  }
 
   async function doAdjust(sign){
     // Double-submit guard. Without this a slow network + a second tap (or the
@@ -528,7 +703,8 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     if(btn && btn.disabled) return;
 
     var m=memberById(current); if(!m) return;
-    var amt=parseFloat($('d-amt').value), note=$('d-note').value.trim(), fb=$('d-fb'); fb.className='feedback';
+    var srcId = sign<0 ? 'd-amt' : 'd-adj';
+    var amt=parseFloat($(srcId).value), note=$('d-note').value.trim(), fb=$('d-fb'); fb.className='feedback';
     if(isNaN(amt)||amt<=0){ fb.className='feedback warn'; fb.textContent='Enter an amount.'; return; }
     if(sign<0){ var bal=balanceOf(m.id); if(amt>bal){ fb.className='feedback warn'; fb.textContent='Redeem exceeds balance ('+money(bal)+').'; return; } }
 
@@ -538,7 +714,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
       // Only report success if the row actually landed in the ledger.
       var ok = await addTxn(m.id, sign<0?'redeem':'earn', sign*amt, note);
       if(!ok){ fb.className='feedback warn'; fb.textContent='Not saved — nothing was charged. Try again.'; return; }
-      $('d-amt').value='';$('d-note').value='';
+      $(srcId).value=''; if(sign>0) $('d-note').value='';
       fb.textContent=(sign<0?'Redeemed ':'Added ')+money(amt)+'. New balance '+money(balanceOf(m.id))+'.';
       renderDetail(); renderMembers();
     } finally {
@@ -554,7 +730,15 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
   });
   $('d-earn').addEventListener('click',function(){doAdjust(1);});
   $('d-redeem').addEventListener('click',function(){doAdjust(-1);});
-  $('d-amt').addEventListener('keydown',function(e){ if(e.key==='Enter') doAdjust(1); });
+  $('d-amt').addEventListener('keydown',function(e){ if(e.key==='Enter') doAdjust(-1); });
+  $('d-sale').addEventListener('input',updateEarnPreview);
+  $('d-sale').addEventListener('keydown',function(e){ if(e.key==='Enter') doSale(); });
+  $('d-sale-add').addEventListener('click',doSale);
+  $('d-redeem-all').addEventListener('click',function(){
+    var m=memberById(current); if(!m) return;
+    var bal=balanceOf(m.id); if(!(bal>0)) return;
+    $('d-amt').value=String(Math.round(bal*100)/100); doAdjust(-1);
+  });
   $('d-edit').addEventListener('click', async function(){
     var m=memberById(current); if(!m) return;
     var nm=prompt('Name:',m.name); if(nm===null) return; nm=nm.trim(); if(!nm){alert('Name required.');return;}
